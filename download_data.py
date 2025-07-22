@@ -78,9 +78,7 @@ if attr_file is None:
 # Find the image directory
 img_dir = None
 for possible_path in [
-    "data/img_align_celeba",
-    "data/original/img_align_celeba",
-    "data/original/img_align_celeba/img_align_celeba"
+    "data/img_align_celeba/img_align_celeba",
 ]:
     if os.path.exists(possible_path) and os.path.isdir(possible_path):
         # Check if there are actually images in this directory
