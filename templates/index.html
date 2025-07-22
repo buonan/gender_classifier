@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gender Classifier</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding-top: 2rem;
+            background-color: #f8f9fa;
+        }
+        .main-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        .result-container {
+            margin-top: 2rem;
+            display: none;
+        }
+        .preview-image {
+            max-width: 100%;
+            max-height: 300px;
+            margin-bottom: 1rem;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 1rem;
+        }
+        .model-status {
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            border-radius: 5px;
+        }
+        .status-loaded {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-not-loaded {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container main-container">
+        <h1 class="text-center mb-4">Gender Classifier</h1>
+        
+        <div id="model-status" class="model-status">
+            Checking model status...
+        </div>
+        
+        <div class="mb-4">
+            <p>Upload an image to classify whether it shows a man or a woman.</p>
+            <form id="upload-form" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="imageUpload" class="form-label">Choose an image:</label>
+                    <input class="form-control" type="file" id="imageUpload" name="file" accept="image/*">
+                </div>
+                <button type="submit" class="btn btn-primary" id="predict-btn">Predict</button>
+            </form>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p>Processing image...</p>
+        </div>
+        
+        <div class="result-container" id="result-container">
+            <h3>Prediction Result</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <img id="preview-image" class="preview-image img-fluid" alt="Uploaded Image">
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Classification:</h5>
+                            <p class="card-text" id="prediction-result">-</p>
+                            <h5 class="card-title">Confidence:</h5>
+                            <p class="card-text" id="confidence-result">-</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check model status
+            fetch('/model-status')
+                .then(response => response.json())
+                .then(data => {
+                    const statusDiv = document.getElementById('model-status');
+                    if (data.status === 'loaded') {
+                        statusDiv.innerHTML = 'Model is loaded and ready for predictions.';
+                        statusDiv.className = 'model-status status-loaded';
+                    } else {
+                        statusDiv.innerHTML = 'Model is not loaded. Please train the model first.';
+                        statusDiv.className = 'model-status status-not-loaded';
+                        document.getElementById('predict-btn').disabled = true;
+                    }
+                });
+            
+            // Handle form submission
+            document.getElementById('upload-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const fileInput = document.getElementById('imageUpload');
+                if (!fileInput.files.length) {
+                    alert('Please select an image to upload');
+                    return;
+                }
+                
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+                
+                // Show loading indicator
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('result-container').style.display = 'none';
+                
+                fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Hide loading indicator
+                    document.getElementById('loading').style.display = 'none';
+                    
+                    if (data.error) {
+                        alert('Error: ' + data.error);
+                        return;
+                    }
+                    
+                    // Display results
+                    document.getElementById('prediction-result').textContent = data.prediction.charAt(0).toUpperCase() + data.prediction.slice(1);
+                    document.getElementById('confidence-result').textContent = data.confidence;
+                    document.getElementById('preview-image').src = 'data:image/jpeg;base64,' + data.image;
+                    document.getElementById('result-container').style.display = 'block';
+                })
+                .catch(error => {
+                    document.getElementById('loading').style.display = 'none';
+                    alert('Error: ' + error);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
