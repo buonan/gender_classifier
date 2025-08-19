@@ -46,8 +46,8 @@ print(f"Classes: {class_names}")
 
 # Create the model - using a pre-trained ResNet18 for transfer learning
 def create_model():
-    model = models.resnet18(pretrained=True)
-    
+    model = models.resnet18(weights='ResNet18_Weights.IMAGENET1K_V1')
+
     # Freeze all layers
     for param in model.parameters():
         param.requires_grad = False

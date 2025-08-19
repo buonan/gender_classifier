@@ -17,7 +17,7 @@ def load_model():
     
     # Load model
     checkpoint = torch.load(model_path, map_location=torch.device('cpu'))
-    model = models.resnet18(pretrained=False)
+    model = models.resnet18(weights='ResNet18_Weights.IMAGENET1K_V1')
     num_features = model.fc.in_features
     model.fc = torch.nn.Linear(num_features, 2)  # 2 classes: male and female
     model.load_state_dict(checkpoint['model_state_dict'])
